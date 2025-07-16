@@ -1,217 +1,271 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { supabase, verifySession } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Lock, Mail, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plane, Shield, Award, Users } from 'lucide-react';
 
 const Login: React.FC = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const { signIn, user } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { signIn, user } = useAuth();
 
   // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      navigate('/portal', { replace: true });
-    }
+  React.useEffect(() => {
+    const checkExistingSession = async () => {
+      if (user) {
+        console.log('User already logged in, redirecting to portal');
+        navigate('/portal', { replace: true });
+        return;
+      }
+      
+      // Double-check with session verification
+      try {
+        const session = await verifySession();
+        if (session) {
+          console.log('Valid session found, redirecting to portal');
+          navigate('/portal', { replace: true });
+        }
+      } catch (error) {
+        console.log('No valid session found, staying on login page');
+      }
+    };
+
+    checkExistingSession();
   }, [user, navigate]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (error) {
-      setError(null);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+    
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
 
     try {
-      const { error } = await signIn(formData.email, formData.password);
+      console.log('Attempting login for:', email);
       
+      const { error } = await signIn(email, password);
+
       if (error) {
-        // Handle specific error messages
+        console.error('Login error:', error);
+        
+        // Provide user-friendly error messages
         if (error.message.includes('Invalid login credentials')) {
           setError('Invalid email or password. Please check your credentials and try again.');
         } else if (error.message.includes('Email not confirmed')) {
-          setError('Please check your email and confirm your account before signing in.');
+          setError('Please check your email and click the confirmation link before logging in.');
+        } else if (error.message.includes('Too many requests')) {
+          setError('Too many login attempts. Please wait a few minutes before trying again.');
         } else {
-          setError(error.message || 'An error occurred during sign in. Please try again.');
+          setError(error.message || 'An error occurred during login. Please try again.');
         }
-      } else {
-        // Success - redirect will happen automatically via useEffect
-        navigate('/portal', { replace: true });
+        return;
       }
-    } catch (err) {
+
+      console.log('Login successful, redirecting to portal');
+      
+      // Small delay to ensure auth state is updated
+      setTimeout(() => {
+        navigate('/portal', { replace: true });
+      }, 100);
+      
+    } catch (error: any) {
+      console.error('Unexpected login error:', error);
       setError('An unexpected error occurred. Please try again.');
-      console.error('Login error:', err);
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Logo and Header */}
-        <div className="text-center">
-          <Link to="/" className="inline-block">
+    <div className="min-h-screen flex">
+      {/* Left Side - Login Form */}
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 bg-white">
+        <div className="mx-auto w-full max-w-sm lg:w-96">
+          {/* Back to Home Button */}
+          <div className="mb-8">
+            <Link
+              to="/"
+              className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Back to Home
+            </Link>
+          </div>
+
+          {/* Logo and Header */}
+          <div className="mb-8">
             <img
               src="/ATS.png"
               alt="Aboriginal Training Services"
-              className="h-16 w-auto mx-auto mb-6 transition-transform duration-300 hover:scale-105"
+              className="h-12 w-auto mb-6"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
             />
-          </Link>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Student Portal</h2>
-          <p className="text-gray-600">Sign in to access your courses and certificates</p>
-        </div>
-      </div>
+            <h2 className="text-3xl font-bold text-gray-900">
+              Log in to your Account
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Welcome to the ATS Student Portal:
+            </p>
+          </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex">
-                <AlertCircle className="h-5 w-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-red-700">{error}</div>
+          {/* Login Form */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {error}
               </div>
-            </div>
-          )}
+            )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                Email
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-                  placeholder="Enter your email address"
-                  disabled={isSubmitting}
-                />
-              </div>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your email"
+              />
             </div>
 
-            {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your password"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  name="password"
-                  required
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-                  placeholder="Enter your password"
-                  disabled={isSubmitting}
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isSubmitting}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
-                </button>
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                  Forgot Password?
+                </a>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white transition-all duration-300 ${
-                  isSubmitting
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:scale-105'
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                    Signing In...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {loading ? 'Signing in...' : 'Log In'}
+            </button>
           </form>
 
-          {/* Additional Links */}
-          <div className="mt-6">
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link 
-                  to="/#contact" 
-                  className="font-medium text-blue-700 hover:text-blue-800 transition-colors duration-200"
-                >
-                  Contact us to enroll
-                </Link>
-              </p>
-            </div>
-          </div>
-
-          {/* Demo Information */}
-          <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="font-semibold text-blue-900 mb-2 text-sm">Demo Information</h3>
-            <p className="text-blue-800 text-xs mb-3">
-              This is a fully functional authentication system integrated with Supabase. 
-              Students can sign in with their registered email and password to access their portal.
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?
             </p>
-            <p className="text-blue-700 text-xs">
-              For testing purposes, you can create a test account or contact the administrator 
-              for demo credentials.
-            </p>
+            <Link
+              to="/sign-up"
+              className="mt-2 inline-block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-medium transition-colors duration-200 text-center"
+            >
+              Create an Account
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Back to Home Link */}
-      <div className="mt-8 text-center">
-        <Link 
-          to="/" 
-          className="text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200"
-        >
-          ← Back to Home
-        </Link>
+      {/* Right Side - Brand/Marketing Content */}
+      <div className="hidden lg:block relative flex-1 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-4 h-4 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute top-40 right-20 w-6 h-6 bg-white rounded-full animate-bounce"></div>
+          <div className="absolute bottom-40 left-20 w-3 h-3 bg-white rounded-full animate-ping"></div>
+          <div className="absolute bottom-20 right-10 w-5 h-5 bg-white rounded-full animate-pulse"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative flex flex-col justify-center h-full px-12 xl:px-16">
+          <div className="text-center text-white">
+            {/* Floating Icons */}
+            <div className="flex justify-center space-x-8 mb-12">
+              <div className="bg-white bg-opacity-20 rounded-full p-4 backdrop-blur-sm">
+                <Plane className="h-8 w-8 text-white" />
+              </div>
+              <div className="bg-white bg-opacity-20 rounded-full p-4 backdrop-blur-sm">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+              <div className="bg-white bg-opacity-20 rounded-full p-4 backdrop-blur-sm">
+                <Award className="h-8 w-8 text-white" />
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <h1 className="text-4xl font-bold mb-6">
+              Access Your Training Portal
+            </h1>
+            <p className="text-xl text-blue-100 mb-8 leading-relaxed">
+              Everything you need for professional RPAS certification and training in one easily accessible dashboard.
+            </p>
+
+            {/* Features List */}
+            <div className="space-y-4 text-left max-w-md mx-auto">
+              <div className="flex items-center">
+                <div className="bg-white bg-opacity-20 rounded-full p-2 mr-4">
+                  <Award className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-blue-100">Track your certification progress</span>
+              </div>
+              <div className="flex items-center">
+                <div className="bg-white bg-opacity-20 rounded-full p-2 mr-4">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-blue-100">Connect with instructors and peers</span>
+              </div>
+              <div className="flex items-center">
+                <div className="bg-white bg-opacity-20 rounded-full p-2 mr-4">
+                  <Shield className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-blue-100">Access course materials securely</span>
+              </div>
+            </div>
+
+            {/* Pagination Dots */}
+            <div className="flex justify-center space-x-2 mt-12">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <div className="w-2 h-2 bg-white bg-opacity-50 rounded-full"></div>
+              <div className="w-2 h-2 bg-white bg-opacity-50 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white bg-opacity-5 rounded-full -translate-y-32 translate-x-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white bg-opacity-5 rounded-full translate-y-24 -translate-x-24"></div>
       </div>
     </div>
   );

@@ -80,7 +80,7 @@ BEGIN
     ('What is the maximum altitude for RPAS operations without special authorization?', '300 feet AGL', '400 feet AGL', '500 feet AGL', '1000 feet AGL', 'B', 'The maximum altitude for RPAS operations is 400 feet above ground level (AGL) without special authorization.', course_uuid_1),
     ('Which document must RPAS pilots carry during flight operations?', 'Pilot certificate only', 'Aircraft registration only', 'Both pilot certificate and aircraft registration', 'Insurance documents only', 'C', 'RPAS pilots must carry both their pilot certificate and aircraft registration documents during flight operations.', course_uuid_1),
     ('What is the minimum distance from airports for RPAS operations?', '3 nautical miles', '5.5 kilometers', '9 kilometers', '15 kilometers', 'C', 'RPAS operations must maintain a minimum distance of 9 kilometers from airports unless authorized.', course_uuid_1),
-    ('What weather condition is most dangerous for drone operations?', 'Light rain', 'High winds', 'Overcast skies', 'Cold temperatures', 'B', 'High winds pose the greatest risk to drone operations as they can cause loss of control and crashes.', course_uuid_1),
+    ('What weather condition is most dangerous for RPAS operations?', 'Light rain', 'High winds', 'Overcast skies', 'Cold temperatures', 'B', 'High winds pose the greatest risk to drone operations as they can cause loss of control and crashes.', course_uuid_1),
     ('What is required before flying in controlled airspace?', 'Weather check only', 'ATC authorization', 'Insurance verification', 'Equipment inspection', 'B', 'Air Traffic Control (ATC) authorization is required before flying in controlled airspace.', course_uuid_1),
     ('What is the maximum weight for micro RPAS category?', '100 grams', '250 grams', '500 grams', '1 kilogram', 'B', 'Micro RPAS category includes drones weighing 250 grams or less.', course_uuid_1);
   END IF;
@@ -104,7 +104,7 @@ BEGIN
     ('What is the primary advantage of online RPAS training?', 'Lower cost', 'Self-paced learning', 'No exams required', 'Shorter duration', 'B', 'Online training allows students to learn at their own pace and schedule.', course_uuid_3),
     ('How long is an RPAS certificate valid?', '1 year', '2 years', '5 years', '10 years', 'C', 'RPAS certificates are valid for 5 years from the date of issue.', course_uuid_3),
     ('What happens if you fail the RPAS exam?', 'Retake immediately', 'Wait 24 hours', 'Wait 30 days', 'Retake training', 'B', 'If you fail the RPAS exam, you must wait 24 hours before retaking it.', course_uuid_3),
-    ('Which organization regulates RPAS in Canada?', 'NAV CANADA', 'Transport Canada', 'Canadian Aviation Regulations', 'ICAO', 'B', 'Transport Canada is the regulatory authority for RPAS operations in Canada.', course_uuid_3),
+    ('Which organization regulates RPAS in Canada?', 'NAV CANADA', 'Transport Canada', 'Canadian Aviation Regulations', 'ICAO', 'B', 'Transport Canada is the regulation authority for RPAS operations in Canada.', course_uuid_3),
     ('What is the maximum takeoff weight for small RPAS?', '25 kg', '35 kg', '45 kg', '55 kg', 'A', 'Small RPAS category includes aircraft with maximum takeoff weight of 25 kg or less.', course_uuid_3),
     ('What documentation is required for RPAS registration?', 'Proof of purchase only', 'Owner information only', 'Both owner info and aircraft details', 'Insurance documents', 'C', 'RPAS registration requires both owner information and detailed aircraft specifications.', course_uuid_3);
   END IF;

@@ -11,6 +11,8 @@ import Login from './pages/Login';
 import Portal from './pages/Portal';
 import CourseDetail from './pages/CourseDetail';
 import PracticeQuestions from './pages/PracticeQuestions';
+import PracticeExam from './pages/PracticeExam';
+import SignUp from './pages/SignUp';
 
 function App() {
   return (
@@ -22,7 +24,8 @@ function App() {
           <Route path="/training" element={<Layout><Training /></Layout>} />
           <Route path="/indigenous-relations" element={<Layout><IndigenousRelations /></Layout>} />
           <Route path="/dashboard" element={<Layout><StudentDashboard /></Layout>} />
-          
+          <Route path="/sign-up" element={<Layout><SignUp /></Layout>} />
+
           {/* Login page without layout */}
           <Route path="/login" element={<Login />} />
           
@@ -44,10 +47,26 @@ function App() {
             } 
           />
           <Route 
+            path="/course/:courseId" 
+            element={
+              <ProtectedRoute>
+                <CourseDetail />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/portal/practice-questions/:courseId" 
             element={
               <ProtectedRoute>
                 <PracticeQuestions />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/portal/practice-exam/:courseId" 
+            element={
+              <ProtectedRoute>
+                <PracticeExam />
               </ProtectedRoute>
             } 
           />
